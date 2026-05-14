@@ -70,6 +70,14 @@ Things to try (in order):
 3. **`mode.rtsp_stream_uri_suffix`** — Set to `?tcp` (or whatever your NVR docs recommend) so `GetStreamUri` returns a URL with that query. Not all firmware honors it; harmless to try.
 4. **MediaMTX restream** — Enable `mode.restream_enabled` and run MediaMTX so Protect talks to **one TCP-friendly** RTSP endpoint on the Pi while MediaMTX pulls from the NVR (often with TCP toward the NVR). This is the most reliable fix when direct RTP/UDP is the problem.
 
+### Codec (H.265 / HEVC) and metadata in `config.yml`
+
+The **`width` / `height` / `fps`** fields are only used in ONVIF profile metadata. They **do not change** the encoded video. The real codec comes from whatever the NVR puts on that RTSP path.
+
+VLC’s **Codec** tab showing **HEVC (H.265)** means the NVR is sending H.265 on those channels. UniFi Protect support for third‑party **H.265** RTSP varies by Protect version and hardware; if live view fails or stalls, try a path the NVR documents as **H.264** (often a **sub** or **secondary** stream URL), or use **MediaMTX** restream and configure the path to negotiate codecs your Protect deployment handles.
+
+The **`manufacturer` / `model`** keys in YAML are **not** what this bridge sends in `GetDeviceInformation` (those responses use **HikiFi** and the camera **`name`**). You can keep YAML `manufacturer` / `model` as private notes; they do not explain what UniFi shows in the adoption list.
+
 ## Docker Compose (recommended on Pi)
 
 Host networking is used so **WS-Discovery multicast (UDP 3702)** works reliably.
