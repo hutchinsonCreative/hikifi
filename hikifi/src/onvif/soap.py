@@ -287,7 +287,7 @@ class SoapDispatch:
         local = a.rsplit("/", 1)[-1]
 
         def ok(xml: str) -> tuple[int, str, str]:
-            return 200, "application/soap+xml; charset=utf-8", xml
+            return 200, "application/soap+xml", xml
 
         if local == "GetDeviceInformation" or a.endswith("/GetDeviceInformation"):
             return ok(get_device_information(self.cam, self.firmware_version))
@@ -309,7 +309,7 @@ class SoapDispatch:
             return ok(get_stream_uri(self.effective_rtsp()))
         if local == "GetSnapshotUri" or a.endswith("/GetSnapshotUri"):
             xml = get_snapshot_uri_not_supported()
-            return 200, "application/soap+xml; charset=utf-8", xml
+            return 200, "application/soap+xml", xml
 
         return ok(
             fault("Receiver", "ActionNotSupported", f"Action not implemented: {esc(a)}")
