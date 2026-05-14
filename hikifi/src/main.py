@@ -177,7 +177,7 @@ def main() -> None:
     try:
         asyncio.run(_async_main(path))
     except ConfigError as e:
-        print(f"Configuration error: {e}", file=sys.stderr)
+        print(f"Error: {e}", file=sys.stderr)
         raise SystemExit(2) from e
 
 

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import errno
 import logging
 from datetime import datetime, timezone
 from typing import TYPE_CHECKING
@@ -14,7 +15,7 @@ from src.discovery import DiscoveryRuntime
 from src.rtsp_connectivity import RtspConnectivityReport
 from src.onvif.soap import HIKIFI_ONVIF_MANUFACTURER, SoapDispatch, hikifi_onvif_model, parse_soap_action
 from src.onvif.ws_security import verify_ws_security_soap
-from src.config import camera_advertised_host
+from src.config import ConfigError, camera_advertised_host
 from src.utils.redact import redact_rtsp_url
 
 if TYPE_CHECKING:
@@ -315,7 +316,17 @@ async def start_servers(
     for i, _cam in enumerate(cameras):
         port = cfg.server.onvif_http_port_start + i
         site = web.TCPSite(onvif_runner, cfg.server.bind_ip, port)
-        await site.start()
+        try:
+            await site.start()
+        except OSError as e:
+            if e.errno == errno.EADDRINUSE:
+                raise ConfigError(
+                    f"Cannot bind ONVIF HTTP on {cfg.server.bind_ip!r} port {port} (camera {_cam.id!r}): "
+                    "address already in use. Another process — often a previous instance of this bridge — "
+                    "is still listening. Stop it (e.g. `sudo ss -tlnp | grep {port}` then kill that PID, "
+                    "or stop the systemd/docker unit), or set a different server.onvif_http_port_start."
+                ) from e
+            raise
         sites.append(site)
         logger.info("ONVIF HTTP for camera %s on http://%s:%s/", _cam.id, cfg.server.bind_ip, port)
 
@@ -323,7 +334,15 @@ async def start_servers(
     await admin_runner.setup()
     runners.append(admin_runner)
     admin_site = web.TCPSite(admin_runner, cfg.server.bind_ip, cfg.server.admin_port)
-    await admin_site.start()
+    try:
+        await admin_site.start()
+    except OSError as e:
+        if e.errno == errno.EADDRINUSE:
+            raise ConfigError(
+                f"Cannot bind admin API on {cfg.server.bind_ip!r} port {cfg.server.admin_port}: "
+                "address already in use. Stop the other process using that port or change server.admin_port."
+            ) from e
+        raise
     sites.append(admin_site)
     logger.info("Admin API on http://%s:%s/", cfg.server.bind_ip, cfg.server.admin_port)
 
