@@ -15,6 +15,11 @@ from src.config import ConfigError, load_config
 from src.discovery import DiscoveryRuntime, start_discovery
 from src.onvif.soap import device_xaddr, media_xaddr
 from src.onvif_server import start_servers
+from src.rtsp_connectivity import (
+    RtspConnectivityReport,
+    check_all_cameras_tcp,
+    log_connectivity_results,
+)
 from src.utils.app_logging import get_logger, setup_logging
 from src.utils.env_file import load_dotenv_for_config
 from src.utils.redact import redact_rtsp_url
@@ -69,7 +74,7 @@ def _log_virtual_endpoints_ready(cfg, cameras: list, ports_by_id: dict[str, int]
             med,
         )
     logger.info(
-        "Admin: http://%s:%s/health  JSON: /cameras  Client activity: /debug/activity",
+        "Admin: http://%s:%s/health  JSON: /cameras  Activity: /debug/activity  RTSP TCP checks: /debug/rtsp",
         cfg.server.advertised_ip,
         cfg.server.admin_port,
     )
@@ -88,8 +93,22 @@ async def _async_main(config_path: Path) -> None:
         advertised_name=lambda c: c.name,
     )
 
+    rtsp_report = RtspConnectivityReport()
+    if cfg.server.rtsp_connectivity_check_enabled:
+        results = await check_all_cameras_tcp(
+            cfg.cameras,
+            cfg.server.rtsp_connectivity_check_timeout_seconds,
+        )
+        rtsp_report.set_results(True, results)
+        log_connectivity_results(results)
+    else:
+        logger.info(
+            "RTSP TCP connectivity checks disabled (set server.rtsp_connectivity_check_enabled: true to enable)"
+        )
+        rtsp_report.set_results(False, {})
+
     activity = CameraActivityTracker([c.id for c in cfg.cameras])
-    runners, _sites = await start_servers(cfg, cfg.cameras, discovery_runtime, activity)
+    runners, _sites = await start_servers(cfg, cfg.cameras, discovery_runtime, activity, rtsp_report)
     _log_virtual_endpoints_ready(cfg, cfg.cameras, ports_by_id)
 
     disc: asyncio.DatagramTransport | None = None

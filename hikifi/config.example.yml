@@ -5,6 +5,9 @@ server:
   onvif_http_port_start: 8081
   discovery_enabled: true
   log_level: "info"
+  # Optional: at startup, TCP-connect to each camera rtsp_url host:port (default 554)
+  rtsp_connectivity_check_enabled: true
+  rtsp_connectivity_check_timeout_seconds: 5
 
 security:
   onvif_username: "unifi"

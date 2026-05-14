@@ -11,6 +11,7 @@ from aiohttp import web
 from src import __version__
 from src.camera_activity import CameraActivityTracker
 from src.discovery import DiscoveryRuntime
+from src.rtsp_connectivity import RtspConnectivityReport
 from src.onvif.soap import SoapDispatch, parse_soap_action
 from src.onvif.ws_security import verify_ws_security_soap
 from src.utils.redact import redact_rtsp_url
@@ -122,12 +123,40 @@ def build_admin_app(
     cameras: list[CameraConfig],
     discovery: DiscoveryRuntime,
     activity: CameraActivityTracker,
+    rtsp_report: RtspConnectivityReport,
 ) -> web.Application:
     app = web.Application()
     app["cfg"] = cfg
     app["cameras"] = cameras
     app["discovery"] = discovery
     app["activity"] = activity
+    app["rtsp_report"] = rtsp_report
+
+    def _connectivity_for_cam(cam_id: str) -> dict[str, object]:
+        if not cfg.server.rtsp_connectivity_check_enabled:
+            return {
+                "rtspTcpCheckEnabled": False,
+                "rtspTcpReachable": None,
+                "rtspTcpCheckDetail": None,
+                "rtspTarget": None,
+                "rtspTcpCheckTimeIso": None,
+            }
+        r = rtsp_report.get(cam_id)
+        if r is None:
+            return {
+                "rtspTcpCheckEnabled": True,
+                "rtspTcpReachable": None,
+                "rtspTcpCheckDetail": "no_result",
+                "rtspTarget": None,
+                "rtspTcpCheckTimeIso": None,
+            }
+        return {
+            "rtspTcpCheckEnabled": True,
+            "rtspTcpReachable": r.ok,
+            "rtspTcpCheckDetail": r.detail,
+            "rtspTarget": f"{r.host}:{r.port}",
+            "rtspTcpCheckTimeIso": _utc_iso(r.checked_unix),
+        }
 
     def _activity_for_cam(cam_id: str) -> dict[str, object]:
         snap = activity.snapshot().get(cam_id, {})
@@ -147,6 +176,13 @@ def build_admin_app(
     async def health(_: web.Request) -> web.Response:
         snap = activity.snapshot()
         touched = sum(1 for v in snap.values() if int(v.get("soapRequests") or 0) > 0)
+        tcp_snap = rtsp_report.snapshot()
+        tcp_enabled = cfg.server.rtsp_connectivity_check_enabled
+        all_reachable: bool | None = None
+        unreachable = 0
+        if tcp_enabled and tcp_snap:
+            all_reachable = all(bool(v.get("rtspTcpReachable")) for v in tcp_snap.values())
+            unreachable = sum(1 for v in tcp_snap.values() if not v.get("rtspTcpReachable"))
         return web.json_response(
             {
                 "status": "ok",
@@ -154,6 +190,9 @@ def build_admin_app(
                 "discoveryEnabled": cfg.server.discovery_enabled,
                 "restreamEnabled": cfg.mode.restream_enabled,
                 "virtualCamerasWithOnvifClients": touched,
+                "rtspTcpCheckEnabled": tcp_enabled,
+                "rtspTcpAllReachable": all_reachable,
+                "rtspTcpUnreachableCount": unreachable if tcp_enabled else None,
             }
         )
 
@@ -174,6 +213,7 @@ def build_admin_app(
                 ),
             }
             row.update(_activity_for_cam(cam.id))
+            row.update(_connectivity_for_cam(cam.id))
             out.append(row)
         return web.json_response(out)
 
@@ -201,6 +241,7 @@ def build_admin_app(
                     ),
                 }
                 row.update(_activity_for_cam(cam.id))
+                row.update(_connectivity_for_cam(cam.id))
                 return web.json_response(row)
         return web.Response(status=404, text="Unknown camera id")
 
@@ -230,11 +271,21 @@ def build_admin_app(
             enriched[cid] = row
         return web.json_response({"cameras": enriched})
 
+    async def debug_rtsp(_: web.Request) -> web.Response:
+        return web.json_response(
+            {
+                "rtspTcpCheckEnabled": cfg.server.rtsp_connectivity_check_enabled,
+                "timeoutSeconds": cfg.server.rtsp_connectivity_check_timeout_seconds,
+                "cameras": rtsp_report.snapshot(),
+            }
+        )
+
     app.router.add_get("/health", health)
     app.router.add_get("/cameras", list_cameras)
     app.router.add_get("/cameras/{id}", get_camera)
     app.router.add_get("/debug/discovery", debug_discovery)
     app.router.add_get("/debug/activity", debug_activity)
+    app.router.add_get("/debug/rtsp", debug_rtsp)
     return app
 
 
@@ -243,9 +294,10 @@ async def start_servers(
     cameras: list[CameraConfig],
     discovery: DiscoveryRuntime,
     activity: CameraActivityTracker,
+    rtsp_report: RtspConnectivityReport,
 ) -> tuple[list[web.AppRunner], list[web.BaseSite]]:
     onvif_app = build_onvif_app(cfg, cameras, activity)
-    admin_app = build_admin_app(cfg, cameras, discovery, activity)
+    admin_app = build_admin_app(cfg, cameras, discovery, activity, rtsp_report)
 
     runners: list[web.AppRunner] = []
     sites: list[web.BaseSite] = []

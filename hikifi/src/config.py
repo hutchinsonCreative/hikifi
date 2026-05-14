@@ -39,6 +39,8 @@ class ServerConfig:
     onvif_http_port_start: int
     discovery_enabled: bool
     log_level: str
+    rtsp_connectivity_check_enabled: bool = True
+    rtsp_connectivity_check_timeout_seconds: float = 5.0
 
 
 @dataclass
@@ -110,7 +112,6 @@ def load_config(path: str | Path) -> AppConfig:
         ],
         "server",
     )
-    admin_port = int(s.get("admin_port", 8090))
 
     _require_keys(sec, ["onvif_username", "onvif_password_env"], "security")
     _require_keys(mode, ["restream_enabled", "mediamtx_base_url"], "mode")
@@ -124,6 +125,13 @@ def load_config(path: str | Path) -> AppConfig:
     sec2 = substituted["security"]
     mode2 = substituted["mode"]
     cams2 = substituted["cameras"]
+
+    rtsp_check = bool(s2.get("rtsp_connectivity_check_enabled", True))
+    rtsp_timeout = float(s2.get("rtsp_connectivity_check_timeout_seconds", 5.0))
+    if rtsp_timeout <= 0 or rtsp_timeout > 120:
+        raise ConfigError("server.rtsp_connectivity_check_timeout_seconds must be in (0, 120]")
+
+    admin_port = int(s2.get("admin_port", 8090))
 
     pw_env = sec2["onvif_password_env"]
     if pw_env not in os.environ:
@@ -173,6 +181,8 @@ def load_config(path: str | Path) -> AppConfig:
             onvif_http_port_start=int(s2["onvif_http_port_start"]),
             discovery_enabled=bool(s2["discovery_enabled"]),
             log_level=str(s2["log_level"]),
+            rtsp_connectivity_check_enabled=rtsp_check,
+            rtsp_connectivity_check_timeout_seconds=rtsp_timeout,
         ),
         security=SecurityConfig(
             onvif_username=str(sec2["onvif_username"]),

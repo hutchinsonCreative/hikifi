@@ -32,6 +32,8 @@ cp .env.example .env
 # Edit .env: set ONVIF_PASSWORD and any variables referenced in config.yml (${HIK_USER}, etc.).
 ```
 
+Variables in a `.env` file next to `config.yml` (or in the current working directory) are loaded **automatically** before `config.yml` is read. They do **not** override variables already set in your shell (so `export HIK_USER=...` still wins).
+
 4. Run:
 
 ```bash
@@ -39,7 +41,7 @@ export PYTHONPATH=.
 python -m src.main --config config.yml
 ```
 
-Variables in a `.env` file next to `config.yml` (or in the current working directory) are loaded **automatically** before `config.yml` is read. They do **not** override variables already set in your shell (so `export HIK_USER=...` still wins).
+On startup the service **TCP-probes each camera’s `rtsp_url` host and port** (default 554) and logs **OK** or **FAILED** per camera, plus a short summary. That confirms routing/firewall from this host to the NVR; it does **not** validate RTSP credentials or the stream path. Disable with `server.rtsp_connectivity_check_enabled: false` in `config.yml` if you do not want these checks.
 
 5. Check health (default admin port **8090**):
 
@@ -93,7 +95,7 @@ pytest
 
 - **UDP 3702**: WS-Discovery (multicast `239.255.255.250`); required for automatic discovery.
 - **TCP `onvif_http_port_start` … `onvif_http_port_start + N - 1`**: ONVIF SOAP per virtual camera.
-- **TCP `admin_port`**: `/health`, `/cameras`, `/debug/discovery`, `/debug/activity` (no secrets in JSON; RTSP URLs are redacted). **`/debug/activity`** shows per virtual camera whether any ONVIF client has sent SOAP yet and WS-Discovery announcement counts.
+- **TCP `admin_port`**: `/health`, `/cameras`, `/debug/discovery`, `/debug/activity`, **`/debug/rtsp`** (no secrets in JSON; RTSP URLs are redacted). **`/debug/activity`** shows per virtual camera whether any ONVIF client has sent SOAP yet and WS-Discovery announcement counts. **`/debug/rtsp`** shows the last **TCP reachability** result toward each camera’s `rtsp_url` host:port (startup check; not a full RTSP auth test).
 
 ## Security
 
