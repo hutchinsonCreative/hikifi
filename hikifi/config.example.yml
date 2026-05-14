@@ -19,11 +19,13 @@ mode:
   # Optional: append to direct RTSP URLs in GetStreamUri (e.g. "?tcp"). See README if live view stalls after one frame.
   # rtsp_stream_uri_suffix: "?tcp"
 
+# Each camera's `name` is what clients show after "HikiFi " (WS-Discovery + ONVIF profile names).
+# `manufacturer` / `model` below are optional notes for you; ONVIF identity uses HikiFi + `name`.
 cameras:
   - id: "cam01"
     name: "Right Camera 1"
-    manufacturer: "Virtual Hikvision Bridge"
-    model: "RTSP-ONVIF-Bridge"
+    manufacturer: "HikiFi"
+    model: "Physical camera (your notes)"
     serial: "VHIK-CAM-001"
     rtsp_url: "rtsp://${HIK_USER}:${HIK_PASS}@192.168.60.32:554/Streaming/Channels/101"
     width: 1920
@@ -32,8 +34,8 @@ cameras:
 
   - id: "cam02"
     name: "Right Camera 2"
-    manufacturer: "Virtual Hikvision Bridge"
-    model: "RTSP-ONVIF-Bridge"
+    manufacturer: "HikiFi"
+    model: "Physical camera (your notes)"
     serial: "VHIK-CAM-002"
     rtsp_url: "rtsp://${HIK_USER}:${HIK_PASS}@192.168.60.32:554/Streaming/Channels/201"
     width: 1920

@@ -32,10 +32,17 @@ def test_get_stream_uri_direct_vs_restream() -> None:
     )
     d1 = SoapDispatch(cfg_direct, cam, "10.0.0.1", 8081, "1.0.0")
     _st, _ct, body = d1.dispatch(
+        "http://www.onvif.org/ver10/device/wsdl/GetDeviceInformation",
+        "<ignored/>",
+    )
+    assert "HikiFi" in body
+    assert ">n<" in body or "n</tds:Model>" in body
+
+    _st0, _ct0, body0 = d1.dispatch(
         "http://www.onvif.org/ver10/media/wsdl/GetStreamUri",
         "<ignored/>",
     )
-    assert "192.168.1.5" in body
+    assert "192.168.1.5" in body0
 
     cfg_re = AppConfig(
         server=cfg_direct.server,

@@ -16,6 +16,22 @@ def esc(s: str) -> str:
     return html.escape(s, quote=True)
 
 
+# ONVIF / WS-Discovery: clients typically show Manufacturer + Model as the device title.
+HIKIFI_ONVIF_MANUFACTURER = "HikiFi"
+
+
+def hikifi_onvif_model(cam: CameraConfig) -> str:
+    return cam.name
+
+
+def hikifi_ws_discovery_display_name(cam: CameraConfig) -> str:
+    return f"{HIKIFI_ONVIF_MANUFACTURER} {cam.name}"
+
+
+def hikifi_media_configuration_name(cam: CameraConfig) -> str:
+    return hikifi_ws_discovery_display_name(cam)
+
+
 SOAP_ENVELOPE_START = (
     '<?xml version="1.0" encoding="UTF-8"?>'
     '<s:Envelope xmlns:s="http://www.w3.org/2003/05/soap-envelope" '
@@ -63,8 +79,8 @@ def media_xaddr(host: str, port: int) -> str:
 def get_device_information(cam: CameraConfig, firmware_version: str) -> str:
     inner = (
         "<tds:GetDeviceInformationResponse>"
-        f"<tds:Manufacturer>{esc(cam.manufacturer)}</tds:Manufacturer>"
-        f"<tds:Model>{esc(cam.model)}</tds:Model>"
+        f"<tds:Manufacturer>{esc(HIKIFI_ONVIF_MANUFACTURER)}</tds:Manufacturer>"
+        f"<tds:Model>{esc(hikifi_onvif_model(cam))}</tds:Model>"
         f"<tds:FirmwareVersion>{esc(firmware_version)}</tds:FirmwareVersion>"
         f"<tds:SerialNumber>{esc(cam.serial)}</tds:SerialNumber>"
         "<tds:HardwareId>virtual-camera</tds:HardwareId>"
@@ -165,7 +181,7 @@ def get_video_source_configurations(cam: CameraConfig) -> str:
     inner = (
         "<trt:GetVideoSourceConfigurationsResponse>"
         "<trt:Configurations>"
-        f'<tt:Name>{esc(cam.name)}</tt:Name>'
+        f'<tt:Name>{esc(hikifi_media_configuration_name(cam))}</tt:Name>'
         f"<tt:UseCount>1</tt:UseCount>"
         f'<tt:token>{esc(vsc_token)}</tt:token>'
         "<tt:SourceToken>"
@@ -184,7 +200,7 @@ def get_video_encoder_configurations(cam: CameraConfig) -> str:
     inner = (
         "<trt:GetVideoEncoderConfigurationsResponse>"
         "<trt:Configurations>"
-        f'<tt:Name>{esc(cam.name)}</tt:Name>'
+        f'<tt:Name>{esc(hikifi_media_configuration_name(cam))}</tt:Name>'
         f"<tt:UseCount>1</tt:UseCount>"
         f'<tt:token>{esc(vec_token)}</tt:token>'
         f"<tt:Encoding>H264</tt:Encoding>"
@@ -216,16 +232,16 @@ def get_profiles(cam: CameraConfig) -> str:
         "<trt:Profiles fixed=\"true\" token="
         f'"{esc(ptok)}"'
         ">"
-        "<tt:Name>main</tt:Name>"
+        f"<tt:Name>{esc(hikifi_media_configuration_name(cam))}</tt:Name>"
         "<tt:VideoSourceConfiguration>"
-        f'<tt:Name>{esc(cam.name)}</tt:Name>'
+        f'<tt:Name>{esc(hikifi_media_configuration_name(cam))}</tt:Name>'
         f"<tt:UseCount>1</tt:UseCount>"
         f'<tt:token>{esc(vsc_token)}</tt:token>'
         f"<tt:SourceToken>{esc(vs_token)}</tt:SourceToken>"
         "<tt:Bounds height=\"100\" width=\"100\" y=\"0\" x=\"0\"/>"
         "</tt:VideoSourceConfiguration>"
         "<tt:VideoEncoderConfiguration>"
-        f'<tt:Name>{esc(cam.name)}</tt:Name>'
+        f'<tt:Name>{esc(hikifi_media_configuration_name(cam))}</tt:Name>'
         f"<tt:UseCount>1</tt:UseCount>"
         f'<tt:token>{esc(vec_token)}</tt:token>'
         "<tt:Encoding>H264</tt:Encoding>"

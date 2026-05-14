@@ -12,7 +12,7 @@ from src import __version__
 from src.camera_activity import CameraActivityTracker
 from src.discovery import DiscoveryRuntime
 from src.rtsp_connectivity import RtspConnectivityReport
-from src.onvif.soap import SoapDispatch, parse_soap_action
+from src.onvif.soap import HIKIFI_ONVIF_MANUFACTURER, SoapDispatch, hikifi_onvif_model, parse_soap_action
 from src.onvif.ws_security import verify_ws_security_soap
 from src.utils.redact import redact_rtsp_url
 
@@ -204,6 +204,8 @@ def build_admin_app(
                 "id": cam.id,
                 "name": cam.name,
                 "serial": cam.serial,
+                "manufacturer": HIKIFI_ONVIF_MANUFACTURER,
+                "model": hikifi_onvif_model(cam),
                 "httpPort": start + i,
                 "deviceService": f"http://{cfg.server.advertised_ip}:{start + i}/onvif/device_service",
                 "rtspUrl": redact_rtsp_url(
@@ -227,8 +229,8 @@ def build_admin_app(
                     "id": cam.id,
                     "name": cam.name,
                     "serial": cam.serial,
-                    "manufacturer": cam.manufacturer,
-                    "model": cam.model,
+                    "manufacturer": HIKIFI_ONVIF_MANUFACTURER,
+                    "model": hikifi_onvif_model(cam),
                     "width": cam.width,
                     "height": cam.height,
                     "fps": cam.fps,

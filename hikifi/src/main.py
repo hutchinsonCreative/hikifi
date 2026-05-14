@@ -13,7 +13,7 @@ from src import __version__
 from src.camera_activity import CameraActivityTracker
 from src.config import ConfigError, load_config
 from src.discovery import DiscoveryRuntime, start_discovery
-from src.onvif.soap import device_xaddr, media_xaddr
+from src.onvif.soap import device_xaddr, hikifi_ws_discovery_display_name, media_xaddr
 from src.onvif_server import start_servers
 from src.rtsp_connectivity import (
     RtspConnectivityReport,
@@ -90,7 +90,7 @@ async def _async_main(config_path: Path) -> None:
     }
     discovery_runtime = DiscoveryRuntime(
         onvif_device_xaddr=lambda c: device_xaddr(cfg.server.advertised_ip, ports_by_id[c.id]),
-        advertised_name=lambda c: c.name,
+        advertised_name=hikifi_ws_discovery_display_name,
     )
 
     rtsp_report = RtspConnectivityReport()
