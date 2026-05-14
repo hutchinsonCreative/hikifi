@@ -29,6 +29,16 @@ class CameraConfig:
     width: int
     height: int
     fps: int
+    # When set, WS-Discovery XAddrs and ONVIF URLs use this host instead of server.advertised_ip.
+    # UniFi often collapses multiple ONVIF endpoints on one IP into a single device row; use a
+    # distinct LAN alias per camera (all bound on this host) so each stream appears separately.
+    advertised_ip: str | None = None
+
+
+def camera_advertised_host(cam: CameraConfig, server_default: str) -> str:
+    if cam.advertised_ip is not None and str(cam.advertised_ip).strip():
+        return str(cam.advertised_ip).strip()
+    return server_default
 
 
 @dataclass
@@ -161,6 +171,8 @@ def load_config(path: str | Path) -> AppConfig:
             ],
             f"cameras[{i}]",
         )
+        adv = c.get("advertised_ip")
+        adv_s = str(adv).strip() if adv is not None and str(adv).strip() else None
         cameras.append(
             CameraConfig(
                 id=str(c["id"]),
@@ -172,6 +184,7 @@ def load_config(path: str | Path) -> AppConfig:
                 width=int(c["width"]),
                 height=int(c["height"]),
                 fps=int(c["fps"]),
+                advertised_ip=adv_s,
             )
         )
 
@@ -230,6 +243,8 @@ def validate_config(cfg: AppConfig) -> None:
         u = urlparse(cam.rtsp_url)
         if u.scheme.lower() != "rtsp" or not u.hostname:
             raise ConfigError(f"Camera {cam.id!r} must have a valid rtsp_url with host")
+        if cam.advertised_ip is not None and not str(cam.advertised_ip).strip():
+            raise ConfigError(f"Camera {cam.id!r} advertised_ip must be non-empty when set")
 
     if cfg.mode.restream_enabled:
         mu = urlparse(cfg.mode.mediamtx_base_url)

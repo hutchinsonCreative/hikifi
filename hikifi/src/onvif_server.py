@@ -13,7 +13,7 @@ from src.camera_activity import CameraActivityTracker
 from src.discovery import DiscoveryRuntime
 from src.rtsp_connectivity import RtspConnectivityReport
 from src.onvif.soap import HIKIFI_ONVIF_MANUFACTURER, SoapDispatch, hikifi_onvif_model, parse_soap_action
-from src.onvif.ws_security import verify_ws_security_soap
+from src.config import camera_advertised_host
 from src.utils.redact import redact_rtsp_url
 
 if TYPE_CHECKING:
@@ -55,7 +55,7 @@ async def _soap_handler(request: web.Request) -> web.StreamResponse:
     cam: CameraConfig = request["camera"]
     activity: CameraActivityTracker = request.app["activity"]
     port = _local_port(request)
-    host = cfg.server.advertised_ip
+    host = camera_advertised_host(cam, cfg.server.advertised_ip)
     peer = _peer(request)
     body_text = await request.text()
     headers = {k: v for k, v in request.headers.items()}
@@ -200,14 +200,16 @@ def build_admin_app(
         out = []
         start = cfg.server.onvif_http_port_start
         for i, cam in enumerate(cameras):
+            adv_host = camera_advertised_host(cam, cfg.server.advertised_ip)
             row: dict[str, object] = {
                 "id": cam.id,
                 "name": cam.name,
                 "serial": cam.serial,
                 "manufacturer": HIKIFI_ONVIF_MANUFACTURER,
                 "model": hikifi_onvif_model(cam),
+                "advertisedIp": adv_host,
                 "httpPort": start + i,
-                "deviceService": f"http://{cfg.server.advertised_ip}:{start + i}/onvif/device_service",
+                "deviceService": f"http://{adv_host}:{start + i}/onvif/device_service",
                 "rtspUrl": redact_rtsp_url(
                     f"{cfg.mode.mediamtx_base_url.rstrip('/')}/{cam.id}"
                     if cfg.mode.restream_enabled
@@ -225,17 +227,19 @@ def build_admin_app(
             if cam.id == cid:
                 start = cfg.server.onvif_http_port_start
                 idx = cameras.index(cam)
+                adv_host = camera_advertised_host(cam, cfg.server.advertised_ip)
                 row: dict[str, object] = {
                     "id": cam.id,
                     "name": cam.name,
                     "serial": cam.serial,
                     "manufacturer": HIKIFI_ONVIF_MANUFACTURER,
                     "model": hikifi_onvif_model(cam),
+                    "advertisedIp": adv_host,
                     "width": cam.width,
                     "height": cam.height,
                     "fps": cam.fps,
                     "httpPort": start + idx,
-                    "deviceService": f"http://{cfg.server.advertised_ip}:{start + idx}/onvif/device_service",
+                    "deviceService": f"http://{adv_host}:{start + idx}/onvif/device_service",
                     "rtspUrl": redact_rtsp_url(
                         f"{cfg.mode.mediamtx_base_url.rstrip('/')}/{cam.id}"
                         if cfg.mode.restream_enabled

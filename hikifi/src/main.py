@@ -11,7 +11,7 @@ from pathlib import Path
 
 from src import __version__
 from src.camera_activity import CameraActivityTracker
-from src.config import ConfigError, load_config
+from src.config import ConfigError, camera_advertised_host, load_config
 from src.discovery import DiscoveryRuntime, start_discovery
 from src.onvif.soap import device_xaddr, hikifi_ws_discovery_display_name, media_xaddr
 from src.onvif_server import start_servers
@@ -47,12 +47,25 @@ def _log_config_summary(cfg) -> None:
     logger.info("Security onvif_username=%s", cfg.security.onvif_username)
     for cam in cfg.cameras:
         logger.info(
-            "Camera %s serial=%s name=%s rtsp=%s",
+            "Camera %s serial=%s name=%s onvif_host=%s rtsp=%s",
             cam.id,
             cam.serial,
             cam.name,
+            camera_advertised_host(cam, cfg.server.advertised_ip),
             redact_rtsp_url(cam.rtsp_url),
         )
+
+    if len(cfg.cameras) > 1:
+        hosts = [camera_advertised_host(c, cfg.server.advertised_ip) for c in cfg.cameras]
+        if len(set(hosts)) == 1:
+            logger.warning(
+                "All %d cameras share the same ONVIF advertised host %s. "
+                "Some clients (notably UniFi) collapse these into one device and can mix names "
+                "from different ports. Assign a distinct cameras[].advertised_ip per stream "
+                "(LAN IP aliases on this machine) so each virtual camera appears separately.",
+                len(cfg.cameras),
+                hosts[0],
+            )
 
 
 def _log_virtual_endpoints_ready(cfg, cameras: list, ports_by_id: dict[str, int]) -> None:
@@ -60,11 +73,12 @@ def _log_virtual_endpoints_ready(cfg, cameras: list, ports_by_id: dict[str, int]
         "Virtual cameras come from config only (this service does not probe your LAN for hardware). "
         "When UniFi or another ONVIF client scans or opens an endpoint, you will see SOAP / WS-Discovery lines per camera below."
     )
-    logger.info("--- Advertised ONVIF URLs (use server.advertised_ip from clients) ---")
+    logger.info("--- Advertised ONVIF URLs (per camera; may override server.advertised_ip) ---")
     for cam in cameras:
         port = ports_by_id[cam.id]
-        dev = device_xaddr(cfg.server.advertised_ip, port)
-        med = media_xaddr(cfg.server.advertised_ip, port)
+        host = camera_advertised_host(cam, cfg.server.advertised_ip)
+        dev = device_xaddr(host, port)
+        med = media_xaddr(host, port)
         logger.info(
             "  %s (%s) TCP %s — device_service=%s media_service=%s",
             cam.id,
@@ -89,7 +103,10 @@ async def _async_main(config_path: Path) -> None:
         cam.id: cfg.server.onvif_http_port_start + i for i, cam in enumerate(cfg.cameras)
     }
     discovery_runtime = DiscoveryRuntime(
-        onvif_device_xaddr=lambda c: device_xaddr(cfg.server.advertised_ip, ports_by_id[c.id]),
+        onvif_device_xaddr=lambda c: device_xaddr(
+            camera_advertised_host(c, cfg.server.advertised_ip),
+            ports_by_id[c.id],
+        ),
         advertised_name=hikifi_ws_discovery_display_name,
     )
 

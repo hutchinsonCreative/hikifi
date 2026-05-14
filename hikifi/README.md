@@ -54,6 +54,7 @@ ONVIF HTTP ports start at `onvif_http_port_start` (default **8081**), one port p
 ## UniFi Protect notes
 
 - Set `server.advertised_ip` to the **LAN IP UniFi Protect uses to reach this host** (often the Pi or Mac’s address). WS-Discovery `XAddrs` and stream metadata use this address.
+- **Multiple cameras on one IP:** UniFi’s device list often **merges** every virtual ONVIF endpoint that shares the same **advertised host** into **one row**, even when ports differ. You can see a **mismatched name/model** (for example discovery text from one camera and `GetDeviceInformation` from another). To get **one adoption row per stream**, give each camera its own **LAN address** on this machine (secondary IPs / aliases), and set optional **`cameras[].advertised_ip`** per entry to those addresses. The service still **listens** on `server.bind_ip` and the usual ONVIF ports; only the URLs in discovery and SOAP change. Ensure each alias is configured on the OS before Protect scans.
 - Use the ONVIF username from `security.onvif_username` and the password from your `.env` (`ONVIF_PASSWORD` by default).
 - UniFi sends **WS-Security UsernameToken** requests with **PasswordDigest**; this bridge validates that digest against `ONVIF_PASSWORD`.
 - If Protect refuses to use the **direct Hikvision RTSP URL** returned by `GetStreamUri`, set `mode.restream_enabled: true` and run **MediaMTX** (see below).

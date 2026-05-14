@@ -21,6 +21,10 @@ mode:
 
 # Each camera's `name` is what clients show after "HikiFi " (WS-Discovery + ONVIF profile names).
 # `manufacturer` / `model` below are optional notes for you; ONVIF identity uses HikiFi + `name`.
+# Optional per camera: `advertised_ip` — LAN address UniFi should use for this virtual device only.
+# If you run several cameras on one host, UniFi may show a single merged device unless each has a distinct IP.
+# Example (uncomment and set real aliases on your OS):
+#   advertised_ip: "192.168.60.51"
 cameras:
   - id: "cam01"
     name: "Right Camera 1"
@@ -37,6 +41,7 @@ cameras:
     manufacturer: "HikiFi"
     model: "Physical camera (your notes)"
     serial: "VHIK-CAM-002"
+    # advertised_ip: "192.168.60.52"
     rtsp_url: "rtsp://${HIK_USER}:${HIK_PASS}@192.168.60.32:554/Streaming/Channels/201"
     width: 1920
     height: 1080
