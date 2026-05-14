@@ -16,6 +16,8 @@ security:
 mode:
   restream_enabled: false
   mediamtx_base_url: "rtsp://192.168.60.50:8554"
+  # Optional: append to direct RTSP URLs in GetStreamUri (e.g. "?tcp"). See README if live view stalls after one frame.
+  # rtsp_stream_uri_suffix: "?tcp"
 
 cameras:
   - id: "cam01"

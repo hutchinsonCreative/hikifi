@@ -58,6 +58,17 @@ ONVIF HTTP ports start at `onvif_http_port_start` (default **8081**), one port p
 - UniFi sends **WS-Security UsernameToken** requests with **PasswordDigest**; this bridge validates that digest against `ONVIF_PASSWORD`.
 - If Protect refuses to use the **direct Hikvision RTSP URL** returned by `GetStreamUri`, set `mode.restream_enabled: true` and run **MediaMTX** (see below).
 
+### Live view shows one frame then keeps loading
+
+Video goes **Protect ↔ NVR** directly; this bridge only supplies the RTSP URL. A single decoded frame with endless buffering usually means **RTSP control on TCP port 554 works** (so you get metadata / first picture) but **RTP media** (often **UDP** from NVR toward the Protect appliance) is **blocked, NAT-unfriendly, or not what Protect expects**.
+
+Things to try (in order):
+
+1. **Firewall / VLANs** — Allow **UDP** (and any dynamic RTP ports your NVR documents) from **NVR → Protect** (and sometimes the reverse path), not only TCP 554.
+2. **Sub stream** — Point `rtsp_url` at a **sub** channel (e.g. Hikvision `.../Channels/102` instead of `101`) for lower bitrate; some Protect builds are happier.
+3. **`mode.rtsp_stream_uri_suffix`** — Set to `?tcp` (or whatever your NVR docs recommend) so `GetStreamUri` returns a URL with that query. Not all firmware honors it; harmless to try.
+4. **MediaMTX restream** — Enable `mode.restream_enabled` and run MediaMTX so Protect talks to **one TCP-friendly** RTSP endpoint on the Pi while MediaMTX pulls from the NVR (often with TCP toward the NVR). This is the most reliable fix when direct RTP/UDP is the problem.
+
 ## Docker Compose (recommended on Pi)
 
 Host networking is used so **WS-Discovery multicast (UDP 3702)** works reliably.

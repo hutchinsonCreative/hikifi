@@ -53,6 +53,8 @@ class SecurityConfig:
 class ModeConfig:
     restream_enabled: bool
     mediamtx_base_url: str
+    # Appended to direct (non-restream) RTSP URLs in GetStreamUri (e.g. "?tcp"); see README.
+    rtsp_stream_uri_suffix: str = ""
 
 
 @dataclass
@@ -191,6 +193,7 @@ def load_config(path: str | Path) -> AppConfig:
         mode=ModeConfig(
             restream_enabled=bool(mode2["restream_enabled"]),
             mediamtx_base_url=str(mode2["mediamtx_base_url"]),
+            rtsp_stream_uri_suffix=str(mode2.get("rtsp_stream_uri_suffix", "") or ""),
         ),
         cameras=cameras,
         onvif_password=onvif_password,

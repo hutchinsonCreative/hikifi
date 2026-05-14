@@ -246,6 +246,16 @@ def get_profiles(cam: CameraConfig) -> str:
     return SOAP_ENVELOPE_START + inner + SOAP_ENVELOPE_END
 
 
+def append_rtsp_uri_suffix(url: str, suffix: str) -> str:
+    """Append a query string to an RTSP URL for client-specific transport hints."""
+    s = (suffix or "").strip()
+    if not s:
+        return url
+    if s.startswith("?") or s.startswith("&"):
+        return url + s
+    return url + ("&" if "?" in url else "?") + s
+
+
 def get_stream_uri(rtsp_uri: str) -> str:
     u = esc(rtsp_uri)
     inner = (
@@ -277,7 +287,7 @@ class SoapDispatch:
         if self.cfg.mode.restream_enabled:
             base = self.cfg.mode.mediamtx_base_url.rstrip("/")
             return f"{base}/{self.cam.id}"
-        return self.cam.rtsp_url
+        return append_rtsp_uri_suffix(self.cam.rtsp_url, self.cfg.mode.rtsp_stream_uri_suffix)
 
     def dispatch(self, action: str | None, body_text: str) -> tuple[int, str, str]:
         if action is None:
