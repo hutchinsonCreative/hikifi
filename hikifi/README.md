@@ -74,7 +74,9 @@ Things to try (in order):
 
 The **`width` / `height` / `fps`** fields are only used in ONVIF profile metadata. They **do not change** the encoded video. The real codec comes from whatever the NVR puts on that RTSP path.
 
-VLC’s **Codec** tab showing **HEVC (H.265)** means the NVR is sending H.265 on those channels. UniFi Protect support for third‑party **H.265** RTSP varies by Protect version and hardware; if live view fails or stalls, try a path the NVR documents as **H.264** (often a **sub** or **secondary** stream URL), or use **MediaMTX** restream and configure the path to negotiate codecs your Protect deployment handles.
+VLC’s **Codec** tab showing **HEVC (H.265)** means the NVR is sending H.265 on those channels. Set **`onvif_encoding: H265`** on that camera so ONVIF profile metadata matches the stream; UniFi may otherwise assume **H.264** (the default) and show a **black tile with loading dots** while RTP is actually HEVC.
+
+UniFi Protect support for third‑party **H.265** RTSP still varies by Protect version and hardware; if live view still fails after fixing metadata, try a path the NVR documents as **H.264** (often a **sub** or **secondary** stream URL), add **`mode.rtsp_stream_uri_suffix: "?tcp"`**, or use **MediaMTX** restream so Protect uses a TCP‑friendly hop.
 
 The **`manufacturer` / `model`** keys in YAML are **not** what this bridge sends in `GetDeviceInformation` (those responses use **HikiFi** and the camera **`name`**). You can keep YAML `manufacturer` / `model` as private notes; they do not explain what UniFi shows in the adoption list.
 

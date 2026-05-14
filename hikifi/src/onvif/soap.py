@@ -203,7 +203,7 @@ def get_video_encoder_configurations(cam: CameraConfig) -> str:
         f'<tt:Name>{esc(hikifi_media_configuration_name(cam))}</tt:Name>'
         f"<tt:UseCount>1</tt:UseCount>"
         f'<tt:token>{esc(vec_token)}</tt:token>'
-        f"<tt:Encoding>H264</tt:Encoding>"
+        f"<tt:Encoding>{esc(cam.onvif_encoding)}</tt:Encoding>"
         f'<tt:Resolution><tt:Width>{cam.width}</tt:Width><tt:Height>{cam.height}</tt:Height></tt:Resolution>'
         "<tt:Quality>5.0</tt:Quality>"
         "<tt:RateControl>"
@@ -244,7 +244,7 @@ def get_profiles(cam: CameraConfig) -> str:
         f'<tt:Name>{esc(hikifi_media_configuration_name(cam))}</tt:Name>'
         f"<tt:UseCount>1</tt:UseCount>"
         f'<tt:token>{esc(vec_token)}</tt:token>'
-        "<tt:Encoding>H264</tt:Encoding>"
+        f"<tt:Encoding>{esc(cam.onvif_encoding)}</tt:Encoding>"
         f'<tt:Resolution><tt:Width>{cam.width}</tt:Width><tt:Height>{cam.height}</tt:Height></tt:Resolution>'
         "<tt:Quality>5.0</tt:Quality>"
         "<tt:RateControl>"

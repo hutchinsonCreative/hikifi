@@ -47,11 +47,12 @@ def _log_config_summary(cfg) -> None:
     logger.info("Security onvif_username=%s", cfg.security.onvif_username)
     for cam in cfg.cameras:
         logger.info(
-            "Camera %s serial=%s name=%s onvif_host=%s rtsp=%s",
+            "Camera %s serial=%s name=%s onvif_host=%s onvif_encoding=%s rtsp=%s",
             cam.id,
             cam.serial,
             cam.name,
             camera_advertised_host(cam, cfg.server.advertised_ip),
+            cam.onvif_encoding,
             redact_rtsp_url(cam.rtsp_url),
         )
 

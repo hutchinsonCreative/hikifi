@@ -169,3 +169,75 @@ cameras:
     assert camera_advertised_host(cfg.cameras[0], cfg.server.advertised_ip) == "127.0.0.1"
     assert cfg.cameras[1].advertised_ip == "10.0.0.50"
     assert camera_advertised_host(cfg.cameras[1], cfg.server.advertised_ip) == "10.0.0.50"
+
+
+def test_onvif_encoding_hevc_alias(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("ONVIF_PASSWORD", "pw")
+    cfg_yml = tmp_path / "config.yml"
+    cfg_yml.write_text(
+        """
+server:
+  bind_ip: "127.0.0.1"
+  advertised_ip: "127.0.0.1"
+  admin_port: 8090
+  onvif_http_port_start: 18081
+  discovery_enabled: false
+  log_level: "info"
+security:
+  onvif_username: "unifi"
+  onvif_password_env: "ONVIF_PASSWORD"
+mode:
+  restream_enabled: false
+  mediamtx_base_url: "rtsp://127.0.0.1:8554"
+cameras:
+  - id: "cam01"
+    name: "A"
+    manufacturer: "M"
+    model: "X"
+    serial: "S1"
+    onvif_encoding: "hevc"
+    rtsp_url: "rtsp://u:p@h/x"
+    width: 1
+    height: 1
+    fps: 1
+""",
+        encoding="utf-8",
+    )
+    cfg = load_config(cfg_yml)
+    assert cfg.cameras[0].onvif_encoding == "H265"
+
+
+def test_onvif_encoding_invalid(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("ONVIF_PASSWORD", "pw")
+    cfg_yml = tmp_path / "config.yml"
+    cfg_yml.write_text(
+        """
+server:
+  bind_ip: "127.0.0.1"
+  advertised_ip: "127.0.0.1"
+  admin_port: 8090
+  onvif_http_port_start: 18081
+  discovery_enabled: false
+  log_level: "info"
+security:
+  onvif_username: "unifi"
+  onvif_password_env: "ONVIF_PASSWORD"
+mode:
+  restream_enabled: false
+  mediamtx_base_url: "rtsp://127.0.0.1:8554"
+cameras:
+  - id: "cam01"
+    name: "A"
+    manufacturer: "M"
+    model: "X"
+    serial: "S1"
+    onvif_encoding: "VP9"
+    rtsp_url: "rtsp://u:p@h/x"
+    width: 1
+    height: 1
+    fps: 1
+""",
+        encoding="utf-8",
+    )
+    with pytest.raises(ConfigError):
+        load_config(cfg_yml)

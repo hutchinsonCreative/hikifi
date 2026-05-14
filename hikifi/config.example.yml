@@ -32,6 +32,8 @@ cameras:
     model: "Physical camera (your notes)"
     serial: "VHIK-CAM-001"
     rtsp_url: "rtsp://${HIK_USER}:${HIK_PASS}@192.168.60.32:554/Streaming/Channels/101"
+    # Match ONVIF profile to the real stream (default H264). Use H265 when the NVR sends HEVC.
+    # onvif_encoding: "H265"
     width: 1920
     height: 1080
     fps: 25

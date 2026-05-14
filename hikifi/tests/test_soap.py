@@ -59,6 +59,41 @@ def test_get_stream_uri_direct_vs_restream() -> None:
     assert "rtsp://10.0.0.1:8554/cam01" in body2
 
 
+def test_get_profiles_onvif_encoding_h265() -> None:
+    cam = CameraConfig(
+        id="cam01",
+        name="n",
+        manufacturer="m",
+        model="mod",
+        serial="sn",
+        rtsp_url="rtsp://u:pw@192.168.1.5/stream",
+        width=1920,
+        height=1080,
+        fps=25,
+        onvif_encoding="H265",
+    )
+    cfg = AppConfig(
+        server=ServerConfig(
+            bind_ip="0.0.0.0",
+            advertised_ip="10.0.0.1",
+            admin_port=8090,
+            onvif_http_port_start=8081,
+            discovery_enabled=False,
+            log_level="info",
+        ),
+        security=SecurityConfig(onvif_username="u", onvif_password_env="X"),
+        mode=ModeConfig(restream_enabled=False, mediamtx_base_url="rtsp://10.0.0.1:8554"),
+        cameras=[cam],
+        onvif_password="p",
+    )
+    d = SoapDispatch(cfg, cam, "10.0.0.1", 8081, "1.0.0")
+    _st, _ct, body = d.dispatch(
+        "http://www.onvif.org/ver10/media/wsdl/GetProfiles",
+        "<ignored/>",
+    )
+    assert "<tt:Encoding>H265</tt:Encoding>" in body
+
+
 def test_append_rtsp_uri_suffix() -> None:
     assert append_rtsp_uri_suffix("rtsp://h/p", "?tcp") == "rtsp://h/p?tcp"
     assert append_rtsp_uri_suffix("rtsp://h/p?x=1", "&tcp") == "rtsp://h/p?x=1&tcp"

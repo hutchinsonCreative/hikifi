@@ -29,6 +29,8 @@ class CameraConfig:
     width: int
     height: int
     fps: int
+    # ONVIF profile <tt:Encoding>; must match the codec on rtsp_url (e.g. H265 for HEVC / H.265).
+    onvif_encoding: str = "H264"
     # When set, WS-Discovery XAddrs and ONVIF URLs use this host instead of server.advertised_ip.
     # UniFi often collapses multiple ONVIF endpoints on one IP into a single device row; use a
     # distinct LAN alias per camera (all bound on this host) so each stream appears separately.
@@ -173,6 +175,14 @@ def load_config(path: str | Path) -> AppConfig:
         )
         adv = c.get("advertised_ip")
         adv_s = str(adv).strip() if adv is not None and str(adv).strip() else None
+        enc_raw = c.get("onvif_encoding", "H264")
+        enc = str(enc_raw).strip().upper()
+        if enc == "HEVC":
+            enc = "H265"
+        if enc not in ("H264", "H265"):
+            raise ConfigError(
+                f"cameras[{i}] onvif_encoding must be H264 or H265 (optional; default H264), got {enc_raw!r}"
+            )
         cameras.append(
             CameraConfig(
                 id=str(c["id"]),
@@ -184,6 +194,7 @@ def load_config(path: str | Path) -> AppConfig:
                 width=int(c["width"]),
                 height=int(c["height"]),
                 fps=int(c["fps"]),
+                onvif_encoding=enc,
                 advertised_ip=adv_s,
             )
         )
