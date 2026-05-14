@@ -1,0 +1,17 @@
+services:
+  onvif-bridge:
+    build: .
+    network_mode: host
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - ./config.yml:/app/config.yml:ro
+
+  # Optional: enable when mode.restream_enabled is true in config.yml
+  # mediamtx:
+  #   image: bluenviron/mediamtx:latest
+  #   network_mode: host
+  #   restart: unless-stopped
+  #   volumes:
+  #     - ./mediamtx.yml:/mediamtx.yml:ro

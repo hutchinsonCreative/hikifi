@@ -1,0 +1,36 @@
+server:
+  bind_ip: "0.0.0.0"
+  advertised_ip: "192.168.60.50"
+  admin_port: 8090
+  onvif_http_port_start: 8081
+  discovery_enabled: true
+  log_level: "info"
+
+security:
+  onvif_username: "unifi"
+  onvif_password_env: "ONVIF_PASSWORD"
+
+mode:
+  restream_enabled: false
+  mediamtx_base_url: "rtsp://192.168.60.50:8554"
+
+cameras:
+  - id: "cam01"
+    name: "Right Camera 1"
+    manufacturer: "Virtual Hikvision Bridge"
+    model: "RTSP-ONVIF-Bridge"
+    serial: "VHIK-CAM-001"
+    rtsp_url: "rtsp://${HIK_USER}:${HIK_PASS}@192.168.60.32:554/Streaming/Channels/101"
+    width: 1920
+    height: 1080
+    fps: 25
+
+  - id: "cam02"
+    name: "Right Camera 2"
+    manufacturer: "Virtual Hikvision Bridge"
+    model: "RTSP-ONVIF-Bridge"
+    serial: "VHIK-CAM-002"
+    rtsp_url: "rtsp://${HIK_USER}:${HIK_PASS}@192.168.60.32:554/Streaming/Channels/201"
+    width: 1920
+    height: 1080
+    fps: 25
