@@ -13,6 +13,7 @@ from src.camera_activity import CameraActivityTracker
 from src.discovery import DiscoveryRuntime
 from src.rtsp_connectivity import RtspConnectivityReport
 from src.onvif.soap import HIKIFI_ONVIF_MANUFACTURER, SoapDispatch, hikifi_onvif_model, parse_soap_action
+from src.onvif.ws_security import verify_ws_security_soap
 from src.config import camera_advertised_host
 from src.utils.redact import redact_rtsp_url
 
