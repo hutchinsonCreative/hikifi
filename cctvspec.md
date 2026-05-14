@@ -297,7 +297,7 @@ For ONVIF discovery to work, host networking may be required:
 
 ```yaml
 services:
-  onvif-bridge:
+  hikifi:
     build: .
     network_mode: host
     restart: unless-stopped
@@ -453,7 +453,7 @@ The Raspberry Pi 4 is not suitable for transcoding 16 camera streams.
 ## Suggested Repository Structure
 
 ```text
-rtsp-onvif-bridge/
+hikifi/
   README.md
   spec.md
   docker-compose.yml

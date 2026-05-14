@@ -2,7 +2,9 @@
 
 Lightweight bridge that exposes **one virtual ONVIF camera per RTSP URL** from `config.yml`, so UniFi Protect can discover and add each Hikvision (or other) NVR channel separately. Video is **not transcoded** and, in the default mode, **does not flow through this host**—only discovery and SOAP/ONVIF metadata are served here.
 
-This implementation matches the project specification (`cctvspec.md` in the repo root).
+This implementation matches the project specification (`cctvspec.md` in the repository root).
+
+The runnable service lives in the **`hikifi/`** directory next to that file; all commands below assume your shell is **inside** `hikifi/` (not the repo root unless they are the same).
 
 ## Why Python?
 
@@ -15,7 +17,7 @@ The service is **Python 3.10+** with [aiohttp](https://docs.aiohttp.org/) and [P
 2. Create a virtual environment and install dependencies:
 
 ```bash
-cd rtsp-onvif-bridge
+cd hikifi
 python3 -m venv .venv
 source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -r requirements.txt

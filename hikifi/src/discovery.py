@@ -58,7 +58,7 @@ def _looks_like_probe(xml: str) -> bool:
 
 
 def _endpoint_uuid(cam: CameraConfig) -> str:
-    return str(uuid.uuid5(uuid.NAMESPACE_URL, f"rtsp-onvif-bridge:{cam.id}:{cam.serial}"))
+    return str(uuid.uuid5(uuid.NAMESPACE_URL, f"hikifi:{cam.id}:{cam.serial}"))
 
 
 def build_probe_match_xml(
